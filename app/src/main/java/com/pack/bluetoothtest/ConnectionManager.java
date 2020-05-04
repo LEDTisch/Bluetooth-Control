@@ -24,11 +24,23 @@ public class ConnectionManager {
     public static void send(String command){
         try {
             ConnectionManager.outputStream.write(command.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+
             Toast.makeText(MainActivity.fb,"Bitte das Gerät erst Pairen!",Toast.LENGTH_LONG);
-            Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
-            MainActivity.fb.startActivity(intent);
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+                    MainActivity.fb.startActivity(intent);
+                    MainActivity.fb.finish();
+                }
+
+
+            };
+
+            thread.run();
+
         }
     }
 
