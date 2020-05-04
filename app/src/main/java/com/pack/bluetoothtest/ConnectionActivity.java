@@ -23,6 +23,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 
 import java.util.ArrayList;
@@ -33,76 +34,126 @@ public class ConnectionActivity extends AppCompatActivity {
     private ArrayList<String> mDeviceList = new ArrayList<String>();
     private ArrayList<String> mDeviceListinMAC = new ArrayList<String>();
     private ListView listView;
+    private ProgressBar progressBar;
+    private Button recent;
     int CODE_REQUEST = 45;
+    String recent_mac;
     BluetoothAdapter mBluetoothAdapter;
+    Thread thread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connection);
 
-        final Button connect_btn;
-        final EditText editText;
+
+
+
 
 
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.ACCESS_FINE_LOCATION},CODE_REQUEST );
         }
 
-
+        progressBar = findViewById(R.id.progressBar2);
 
         listView = (ListView) findViewById(R.id.listView);
 
+        recent = findViewById(R.id.button);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothAdapter.startDiscovery();
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReceiver, filter);
-
-
-        connect_btn=(Button)  findViewById(R.id.bluetooth_connect_btn);
-        editText = findViewById(R.id.editText);
-
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = sharedPref.edit();
+
+        if(sharedPref.getString("recent", "")=="") {
+            recent.setEnabled(false);
+        }else{
+            recent.setEnabled(true);
+            recent_mac =sharedPref.getString("recent", "");
+        }
 
 
 
 
-    if(sharedPref.getString("mac", "")!="") {
 
-        editText.setText(sharedPref.getString("mac", ""));
+recent.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        if(recent.getText().toString().contains("Schneller Verbinden")) {
+            thread.interrupt();
+            finish();
+        }else{
 
-    }
 
-        connect_btn.setOnClickListener(new View.OnClickListener() {
+        }
+
+        recent.setEnabled(true);
+        listView.setVisibility(View.INVISIBLE);
+        recent.setText("Schneller Verbinden");
+        progressBar.setVisibility(View.VISIBLE);
+
+        thread = new Thread() {
             @Override
-            public void onClick(View v) {
-                connect_btn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+            public void run() {
 
-                        editor.putString("mac", editText.getText().toString());
-                        editor.commit();
+                if(ConnectionManager.BTinit(recent_mac))
+                {
+                    ConnectionManager.BTconnect(recent_mac);
 
-                        if(ConnectionManager.BTinit(editText.getText().toString()))
-                        {
-                            ConnectionManager.BTconnect(editText.getText().toString());
+                    SharedPreferences sharedPref = ConnectionActivity.this.getPreferences(Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("recent", recent_mac);
+                    editor.commit();
 
-                        }
-                        startActivity(new Intent(ConnectionActivity.this,MainActivity.class));
-                        finish();
-                    }
-                });
+                }
 
-
+                startActivity(new Intent(ConnectionActivity.this,MainActivity.class));
+                finish();
             }
-        });
+        };
+
+        thread.start();
+    }
+});
+
+
+
 
     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            editText.setText(mDeviceListinMAC.get(position));
+        public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+
+            recent.setEnabled(true);
+            listView.setVisibility(View.INVISIBLE);
+            recent.setText("Schneller Verbinden");
+progressBar.setVisibility(View.VISIBLE);
+
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+
+                    if(ConnectionManager.BTinit(mDeviceListinMAC.get(position)))
+                    {
+                        ConnectionManager.BTconnect(mDeviceListinMAC.get(position));
+
+                        SharedPreferences sharedPref = ConnectionActivity.this.getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString("recent", mDeviceListinMAC.get(position));
+                        editor.commit();
+
+                    }
+
+                    startActivity(new Intent(ConnectionActivity.this,MainActivity.class));
+                    finish();
+                }
+            };
+
+            thread.start();
+
+
         }
     });
 
@@ -121,6 +172,12 @@ public class ConnectionActivity extends AppCompatActivity {
             }
         }
     };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
