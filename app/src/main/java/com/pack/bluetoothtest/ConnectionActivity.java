@@ -1,7 +1,11 @@
 package com.pack.bluetoothtest;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -9,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,6 +33,8 @@ public class ConnectionActivity extends AppCompatActivity {
     private ArrayList<String> mDeviceList = new ArrayList<String>();
     private ArrayList<String> mDeviceListinMAC = new ArrayList<String>();
     private ListView listView;
+    int CODE_REQUEST = 45;
+    BluetoothAdapter mBluetoothAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +44,11 @@ public class ConnectionActivity extends AppCompatActivity {
         final EditText editText;
 
 
-        BluetoothAdapter mBluetoothAdapter;
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.ACCESS_FINE_LOCATION},CODE_REQUEST );
+        }
+
+
 
         listView = (ListView) findViewById(R.id.listView);
 
@@ -111,4 +122,18 @@ public class ConnectionActivity extends AppCompatActivity {
         }
     };
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode==CODE_REQUEST) {
+
+
+            if(grantResults[0]==PackageManager.PERMISSION_GRANTED) {
+                mBluetoothAdapter.cancelDiscovery();
+                mBluetoothAdapter.startDiscovery();
+            }else{
+                this.finish();
+            }
+        }
+    }
 }
