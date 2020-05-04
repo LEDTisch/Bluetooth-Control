@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -25,6 +26,9 @@ public class ConnectionManager {
             ConnectionManager.outputStream.write(command.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(MainActivity.fb,"Bitte das Gerät erst Pairen!",Toast.LENGTH_LONG);
+            Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+            MainActivity.fb.startActivity(intent);
         }
     }
 
