@@ -29,7 +29,7 @@ public class ConnectionManager {
     }
 
 
-    public static boolean BTinit()
+    public static boolean BTinit(String s)
     {
         boolean found = false;
 
@@ -63,7 +63,7 @@ public class ConnectionManager {
         {
             for(BluetoothDevice iterator : bondedDevices)
             {
-                if(iterator.getAddress().equals(DEVICE_ADDRESS))
+                if(iterator.getAddress().equals(s))
                 {
                     device = iterator;
                     found = true;
@@ -77,7 +77,7 @@ public class ConnectionManager {
 
 
 
-    public static boolean BTconnect()
+    public static boolean BTconnect(String s)
     {
         boolean connected = true;
 
