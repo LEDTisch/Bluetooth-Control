@@ -4,12 +4,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.Build;
 import android.provider.Settings;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,7 +20,8 @@ public class ConnectionManager {
     public static BluetoothSocket socket;
     public static OutputStream outputStream;
     public InputStream inputStream;
-    private static final String DEVICE_ADDRESS = "00:21:13:01:86:61"; //Die Mac adresse vom arduino bluetooth modul muss angepasst werden
+    public static BluetoothDevice device2;
+    private static String DEVICE_ADDRESS = "00:21:13:01:86:61"; //Die Mac adresse vom arduino bluetooth modul muss angepasst werden
     private static final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
     public static void send(String command){
@@ -27,19 +30,8 @@ public class ConnectionManager {
         } catch (Exception e) {
 
             Toast.makeText(MainActivity.fb,"Bitte das Gerät erst Pairen!",Toast.LENGTH_LONG);
-            Thread thread = new Thread() {
-                @Override
-                public void run() {
-                    super.run();
-                    Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
-                    MainActivity.fb.startActivity(intent);
-                    MainActivity.fb.finish();
-                }
 
 
-            };
-
-            thread.run();
 
         }
     }
@@ -95,6 +87,8 @@ public class ConnectionManager {
 
     public static boolean BTconnect(String s)
     {
+
+
         boolean connected = true;
 
         try
@@ -123,4 +117,18 @@ public class ConnectionManager {
 
         return connected;
     }
+
+    private static void pairDevice(BluetoothDevice device) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+
+
+                socket.getRemoteDevice().createBond();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
